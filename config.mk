@@ -5,17 +5,19 @@ WARN=-Wall -Wextra -Wno-unused-function -Wno-unused-parameter
 # CC=clang
 # CFLAGS=--target=riscv64 -march=rv64gcv_zfh -O3 ${WARN} -nostdlib -fno-builtin -ffreestanding
 
-# full cross compilation toolchain
-CC		  = riscv64-unknown-linux-gnu-gcc
-OBJDUMP   = riscv64-unknown-linux-gnu-objdump
-OBJCOPY   = riscv64-unknown-linux-gnu-objcopy
-AS		  = riscv64-unknown-linux-gnu-gcc
-LD 		  = riscv64-unknown-linux-gnu-ld
-CFLAGS= -march=rv64gv -mcmodel=medany -fno-builtin -nostdlib -ffreestanding\
-			-O3 -MMD -Wall ${WARN}
+# This is meant to specify the toolchain prefix to ensure compatibility across distros.
+CROSS_COMPILE ?= riscv64-unknown-linux-gnu-
+# This is meant to override configuration definitions in `bench/config.h`
+CONFIG_FLAGS ?= -DMAX_MEM=33554432 # 1024*1024*32
 
+# full cross compilation toolchain
+CC		  = ${CROSS_COMPILE}gcc
+OBJDUMP   = ${CROSS_COMPILE}objdump
+OBJCOPY   = ${CROSS_COMPILE}objcopy
+AS		  = ${CROSS_COMPILE}gcc
+LD 		  = ${CROSS_COMPILE}ld
+CFLAGS = ${CONFIG_FLAGS} -march=rv64gv -mcmodel=medany -fno-builtin -nostdlib -ffreestanding -O3 -MMD -Wall ${WARN}
 
 # native build
 #CC=cc
 #CFLAGS=-march=rv64gcv -O3 ${WARN}
-
