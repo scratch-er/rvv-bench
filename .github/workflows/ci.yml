@@ -1,0 +1,64 @@
+name: CI
+
+env:
+  CROSS_COMPILE: riscv64-linux-gnu-
+
+on: workflow_call
+
+jobs:
+
+  build-mini:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/openxiangshan/xs-env:latest
+    timeout-minutes: 5
+    name: Build the RVV benchmark with "mini" memory size
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - name: Fetch submodule
+        run: |
+          git submodule update --init
+          sed -i '/^\s*rdinstret\s/d' ./bench/rvv-chacha-poly/vpoly.s
+      - name: Build benchmarks
+        run: |
+          cd bench && make CONFIG_FLAGS=-DMAX_MEM=4096 all
+      - name: Compress binaries
+        run: |
+          mv bench/build rvv-bench-mini
+          tar -caf rvv-bench-mini.tar.gz rvv-bench-mini
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-mini
+          path: |
+            rvv-bench-mini.tar.gz
+
+  build-default:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/openxiangshan/xs-env:latest
+    timeout-minutes: 5
+    name: Build the RVV benchmark with "default" memory size
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - name: Fetch submodule
+        run: |
+          git submodule update --init
+          sed -i '/^\s*rdinstret\s/d' ./bench/rvv-chacha-poly/vpoly.s
+      - name: Build benchmarks
+        run: |
+          cd bench && make CONFIG_FLAGS=-DMAX_MEM=33554432 all
+      - name: Compress binaries
+        run: |
+          mv bench/build rvv-bench-default
+          tar -caf rvv-bench-default.tar.gz rvv-bench-default
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-default
+          path: |
+            rvv-bench-default.tar.gz
