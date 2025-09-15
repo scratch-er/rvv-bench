@@ -1,0 +1,60 @@
+name: Manually create a release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-name:
+        description: 'Release name (tag name)'
+        required: true
+        type: string
+
+jobs:
+
+  create-release:
+    name: Create release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Set tag name
+        run: echo "TAG_NAME=${{ github.event.inputs.release-name }}" >> $GITHUB_ENV
+      - name: Create tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"
+      
+  call-ci:
+    name: Call CI procedure
+    needs: create-release
+    uses: ./.github/workflows/ci.yml
+    
+  publish-release:
+    name: Publish release
+    runs-on: ubuntu-latest
+    needs: call-ci
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Fetch artifact (default)
+        uses: actions/download-artifact@v4
+        with:
+          name: release-assets-default
+      - name: Fetch artifact (mini)
+        uses: actions/download-artifact@v4
+        with:
+          name: release-assets-mini
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release-name }}
+          name: ${{ github.event.inputs.release-name }}
+          files: |
+            release-assets-default/rvv-bench-default.tar.gz
+            release-assets-mini/rvv-bench-mini.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
