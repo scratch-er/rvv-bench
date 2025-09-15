@@ -19,7 +19,6 @@ jobs:
           submodules: 'true'
       - name: Fetch submodule
         run: |
-          git submodule update --init
           sed -i '/^\s*rdinstret\s/d' ./bench/rvv-chacha-poly/vpoly.s
       - name: Build benchmarks
         run: |
@@ -47,7 +46,6 @@ jobs:
           submodules: 'true'
       - name: Fetch submodule
         run: |
-          git submodule update --init
           sed -i '/^\s*rdinstret\s/d' ./bench/rvv-chacha-poly/vpoly.s
       - name: Build benchmarks
         run: |
